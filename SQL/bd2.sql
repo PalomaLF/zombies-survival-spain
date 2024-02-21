@@ -4,12 +4,6 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
--- -----------------------------------------------------
--- Schema mydb
--- -----------------------------------------------------
--- -----------------------------------------------------
--- Schema zombies
--- -----------------------------------------------------
 
 -- -----------------------------------------------------
 -- Schema zombies
@@ -18,12 +12,52 @@ CREATE SCHEMA IF NOT EXISTS `zombies` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8
 USE `zombies` ;
 
 -- -----------------------------------------------------
+-- Table `mydb`.`cod_comunidades`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `zombies`.`cod_comunidades` (
+  `com_id` INT NOT NULL,
+  `comunidad` VARCHAR(100) NULL,
+  PRIMARY KEY (`com_id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `zombies`.`inf_com`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `zombies`.`inf_com` (
+  `id` INT NOT NULL DEFAULT 1,
+  `comunidad` VARCHAR(100) NOT NULL,
+  `km2` DECIMAL(2) NOT NULL,
+  `total_com` DECIMAL(1) NOT NULL,
+  `densidad` DECIMAL(6) NOT NULL,
+  `R0` DECIMAL(6) NOT NULL,
+  `prob_inf` DECIMAL(6) NOT NULL,
+  `com_id` INT NOT NULL,
+  PRIMARY KEY (`id`, `com_id`),
+  INDEX `fk_inf_com_cod_comunidades_idx` (`com_id` ASC) VISIBLE,
+  CONSTRAINT `fk_inf_com_cod_comunidades`
+    FOREIGN KEY (`com_id`)
+    REFERENCES `mydb`.`cod_comunidades` (`com_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+USE `zombies` ;
+
+-- -----------------------------------------------------
 -- Table `zombies`.`cod_provincias`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `zombies`.`cod_provincias` (
   `prov_id` INT NOT NULL,
   `provincia` VARCHAR(100) NOT NULL,
-  PRIMARY KEY (`prov_id`))
+  `com_id` INT NOT NULL,
+  PRIMARY KEY (`prov_id`, `com_id`),
+  INDEX `fk_cod_provincias_cod_comunidades1_idx` (`com_id` ASC) VISIBLE,
+  CONSTRAINT `fk_cod_provincias_cod_comunidades1`
+    FOREIGN KEY (`com_id`)
+    REFERENCES `mydb`.`cod_comunidades` (`com_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -34,14 +68,18 @@ COLLATE = utf8mb4_0900_ai_ci;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `zombies`.`cod_municipios` (
   `mun_id` INT NOT NULL,
-  `com_id` INT NOT NULL,
   `nombre` VARCHAR(100) NOT NULL,
   `prov_id` INT NOT NULL,
-  PRIMARY KEY (`mun_id`, `prov_id`),
+  `com_id` INT NOT NULL,
+  PRIMARY KEY (`mun_id`, `prov_id`, `com_id`),
   INDEX `fk_cod_municipios_cod_provincias1_idx` (`prov_id` ASC) VISIBLE,
+  INDEX `fk_cod_municipios_cod_comunidades1_idx` (`com_id` ASC) VISIBLE,
   CONSTRAINT `fk_cod_municipios_cod_provincias1`
     FOREIGN KEY (`prov_id`)
-    REFERENCES `zombies`.`cod_provincias` (`prov_id`)
+    REFERENCES `zombies`.`cod_provincias` (`prov_id`),
+  CONSTRAINT `fk_cod_municipios_cod_comunidades1`
+    FOREIGN KEY (`com_id`)
+    REFERENCES `mydb`.`cod_comunidades` (`com_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
@@ -53,7 +91,7 @@ COLLATE = utf8mb4_0900_ai_ci;
 -- Table `zombies`.`inf_muns`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `zombies`.`inf_muns` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL DEFAULT 1,
   `densidad` DECIMAL(6,0) NOT NULL,
   `municipio` VARCHAR(100) NOT NULL,
   `R0` DECIMAL(6,0) NOT NULL,
@@ -78,7 +116,7 @@ COLLATE = utf8mb4_0900_ai_ci;
 -- Table `zombies`.`inf_prov`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `zombies`.`inf_prov` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL DEFAULT 1,
   `provincia` VARCHAR(100) NOT NULL,
   `km2` DECIMAL(1,0) NOT NULL,
   `total_prov` DECIMAL(1,0) NOT NULL,
